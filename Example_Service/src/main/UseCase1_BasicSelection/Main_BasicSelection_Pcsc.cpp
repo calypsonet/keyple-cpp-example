@@ -10,7 +10,12 @@
  * SPDX-License-Identifier: EPL-2.0                                                               *
  **************************************************************************************************/
 
+/* Keyple Card Generic */
+#include "GenericExtensionService.h"
+
 /* Keyple Core Util */
+#include "ByteArrayUtil.h"
+#include "IllegalStateException.h"
 #include "LoggerFactory.h"
 
 /* Keyple Core Service */
@@ -20,10 +25,16 @@
 /* Keyple Plugin Pcsc */
 #include "PcscPluginFactoryBuilder.h"
 
-/* Calypsonet 
+/* Calypsonet */
 
+/* Keyple Cpp Example */
+#include "ConfigurationUtil.h"
+
+using namespace keyple::card::generic;
 using namespace keyple::core::service;
+using namespace keyple::core::util;
 using namespace keyple::core::util::cpp;
+using namespace keyple::core::util::cpp::exception;
 using namespace keyple::plugin::pcsc;
 
 /**
@@ -56,6 +67,8 @@ const std::unique_ptr<Logger> logger = LoggerFactory::getLogger(typeid(Main_Basi
 
 int main()
 {
+    logger->setLoggerLevel(Logger::Level::logTrace);
+
     /* Get the instance of the SmartCardService (singleton pattern) */
     SmartCardService& smartCardService = SmartCardServiceProvider::getService();
 
@@ -67,62 +80,66 @@ int main()
         smartCardService.registerPlugin(PcscPluginFactoryBuilder::builder()->build());
 
     /* Get the generic card extension service */
-    GenericExtensionService cardExtension = GenericExtensionService.getInstance();
+    GenericExtensionService& cardExtension = GenericExtensionService::getInstance();
 
-    // Verify that the extension's API level is consistent with the current service.
-    smartCardService.checkCardExtension(cardExtension);
+    /* Verify that the extension's API level is consistent with the current service */
+    smartCardService.checkCardExtension(std::make_shared<GenericExtensionService>(cardExtension));
 
-    // Get the contactless reader whose name matches the provided regex
-    Reader reader =
-        ConfigurationUtil.getCardReader(plugin, ConfigurationUtil.CONTACTLESS_READER_NAME_REGEX);
+    /* Get the contactless reader whose name matches the provided regex */
+    std::shared_ptr<Reader> reader =
+        ConfigurationUtil::getCardReader(plugin, ConfigurationUtil::CONTACTLESS_READER_NAME_REGEX);
 
-    logger.info("=============== UseCase Generic #1: basic card selection ==================");
+    logger->info("=============== UseCase Generic #1: basic card selection ==================\n");
 
-    // Check if a card is present in the reader
-    if (!reader.isCardPresent()) {
-      logger.error("No card is present in the reader.");
-      System.exit(0);
+    /* Check if a card is present in the reader */
+    if (!reader->isCardPresent()) {
+        logger->error("No card is present in the reader\n");
+        return 0;
     }
 
-    logger.info("= #### Select the card with no conditions.");
+    logger->info("= #### Select the card with no conditions\n");
 
-    // Get the core card selection manager.
-    CardSelectionManager cardSelectionManager = smartCardService.createCardSelectionManager();
+    /* Get the core card selection manager */
+    std::shared_ptr<CardSelectionManager> cardSelectionManager = 
+        smartCardService.createCardSelectionManager();
 
-    // Create a card selection using the generic card extension without specifying any filter
-    // (protocol/power-on data/DFName).
-    CardSelection cardSelection = cardExtension.createCardSelection();
+    /* 
+     * Create a card selection using the generic card extension without specifying any filter
+     * (protocol/power-on data/DFName).
+     */
+    std::shared_ptr<CardSelection> cardSelection = cardExtension.createCardSelection();
 
-    // Prepare the selection by adding the created generic selection to the card selection scenario.
-    cardSelectionManager.prepareSelection(cardSelection);
+    /*
+     * Prepare the selection by adding the created generic selection to the card selection scenario
+     */
+    cardSelectionManager->prepareSelection(cardSelection);
 
-    // Actual card communication: run the selection scenario.
-    CardSelectionResult selectionResult = cardSelectionManager.processCardSelectionScenario(reader);
+    /* Actual card communication: run the selection scenario */
+    std::shared_ptr<CardSelectionResult> selectionResult = 
+        cardSelectionManager->processCardSelectionScenario(reader);
 
-    // Check the selection result.
-    if (selectionResult.getActiveSmartCard() == null) {
-      throw new IllegalStateException("The selection of the card failed.");
+    /* Check the selection result */
+    if (selectionResult->getActiveSmartCard() == nullptr) {
+        throw IllegalStateException("The selection of the card failed.");
     }
 
-    // Get the SmartCard resulting of the selection.
-    SmartCard smartCard = selectionResult.getActiveSmartCard();
+    /* Get the SmartCard resulting of the selection */
+    std::shared_ptr<SmartCard> smartCard = selectionResult->getActiveSmartCard();
 
-    logger.info("= SmartCard = {}", smartCard);
+    logger->info("= SmartCard = %\n", smartCard);
 
-    // Execute an APDU to get CPLC Data (cf. Global Platform Specification)
-    byte[] cplcApdu = ByteArrayUtil.fromHex("80CA9F7F00");
+    /* Execute an APDU to get CPLC Data (cf. Global Platform Specification) */
+    const std::vector<uint8_t> cplcApdu = ByteArrayUtil::fromHex("80CA9F7F00");
 
-    List<String> apduResponses =
-        cardExtension
-            .createCardTransaction(reader, smartCard)
-            .prepareApdu(cplcApdu)
-            .prepareReleaseChannel()
-            .processApdusToHexStrings();
+    const std::vector<std::string> apduResponses =
+        cardExtension.createCardTransaction(reader, smartCard)
+                    ->prepareApdu(cplcApdu)
+                     .prepareReleaseChannel()
+                     .processApdusToHexStrings();
 
-    logger.info("CPLC Data: '{}'", apduResponses.get(0));
+    logger->info("CPLC Data: '%'\n", apduResponses[0]);
 
-    logger.info("= #### End of the generic card processing.");
+    logger->info("= #### End of the generic card processing\n");
 
-    System.exit(0);
-  }
+    return 0;
 }
