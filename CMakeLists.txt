@@ -11,7 +11,20 @@
 # SPDX-License-Identifier: EPL-2.0                                                                *
 # *************************************************************************************************/
 
+PROJECT(KeypleCppExample C CXX)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+
+SET(CMAKE_PROJECT_VERSION_MAJOR "2")
+SET(CMAKE_PROJECT_VERSION_MINOR "0")
+SET(CMAKE_PROJECT_VERSION_PATCH "0")
+
+SET(CMAKE_PROJECT_VERSION "${CMAKE_PROJECT_VERSION_MAJOR}.
+                           ${CMAKE_PROJECT_VERSION_MINOR}.
+                           ${CMAKE_PROJECT_VERSION_PATCH}")
+
+SET(PACKAGE_NAME "KeypleCppExample")
+SET(PACKAGE_VERSION ${CMAKE_PROJECT_VERSION})
+SET(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 
 SET(CMAKE_LEGACY_CYGWIN_WIN32 0)
 SET(CMAKE_CXX_STANDARD 11)
@@ -19,8 +32,6 @@ SET(CMAKE_CXX_STANDARD 11)
 # Compilers
 SET(CMAKE_C_COMPILER_WORKS 1)
 SET(CMAKE_CXX_COMPILER_WORKS 1)
-
-project(Project)
 
 IF(NOT TOOLCHAIN_FILE)
     MESSAGE(FATAL_ERROR "Toolchain file not specified")
