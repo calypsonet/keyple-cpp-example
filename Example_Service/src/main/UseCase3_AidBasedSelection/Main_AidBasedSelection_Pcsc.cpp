@@ -11,14 +11,14 @@
  **************************************************************************************************/
 
 /* Keyple Card Generic */
-#include "GenericCardSelectionAdapter.h"
 #include "GenericExtensionService.h"
 
- /* Keyple Core Util */
+/* Keyple Core Util */
+#include "ByteArrayUtil.h"
+#include "IllegalStateException.h"
 #include "LoggerFactory.h"
 
 /* Keyple Core Service */
-#include "ConfigurableReader.h"
 #include "SmartCardService.h"
 #include "SmartCardServiceProvider.h"
 
@@ -30,25 +30,26 @@
 
 using namespace keyple::card::generic;
 using namespace keyple::core::service;
+using namespace keyple::core::util;
 using namespace keyple::core::util::cpp;
+using namespace keyple::core::util::cpp::exception;
 using namespace keyple::plugin::pcsc;
 
 /**
  *
  *
- * <h1>Use Case Generic 2 – Protocol Based Selection (PC/SC)</h1>
+ * <h1>Use Case Generic 3 – AID Based Selection (PC/SC)</h1>
  *
- * <p>We demonstrate here a selection of cards with the only condition being the type of
- * communication protocol they use, in this case the Mifare Classic. Any card of the Mifare Classic
- * type must lead to a "selected" status, any card using another protocol must be ignored.<br>
- * Note that in this case, no APDU "select application" is sent to the card.
+ * <p>We present here a selection of cards including the transmission of a "select application" APDU
+ * targeting a specific DF Name. Any card with an application whose DF Name starts with the provided
+ * AID should lead to a "selected" state, any card with another DF Name should be ignored.
  *
  * <h2>Scenario:</h2>
  *
  * <ul>
- *   <li>Check if a ISO 14443-4 card is in the reader, select a card (a Mifare Classic card is
- *       expected here).
- *   <li>Run a selection scenario with the MIFARE CLASSIC protocol filter.
+ *   <li>Check if a ISO 14443-4 card is in the reader, select a card with the specified AID (here
+ *       the EMV PPSE AID).
+ *   <li>Run a selection scenario with the DF Name filter.
  *   <li>Output the collected smart card data (power-on data).
  * </ul>
  *
@@ -58,12 +59,11 @@ using namespace keyple::plugin::pcsc;
  *
  * @since 2.0.0
  */
-class Main_ProtocolBasedSelection_Pcsc {};
-const std::string MIFARE_CLASSIC = "MIFARE_CLASSIC";
-const std::unique_ptr<Logger> logger = 
-    LoggerFactory::getLogger(typeid(Main_ProtocolBasedSelection_Pcsc));
+class Main_AidBasedSelection_Pcsc {};
+const std::unique_ptr<Logger> logger =
+    LoggerFactory::getLogger(typeid(Main_AidBasedSelection_Pcsc));
 
-int main()
+int main() 
 {
     /* Get the instance of the SmartCardService (singleton pattern) */
     SmartCardService& smartCardService = SmartCardServiceProvider::getService();
@@ -85,10 +85,7 @@ int main()
     std::shared_ptr<Reader> reader =
         ConfigurationUtil::getCardReader(plugin, ConfigurationUtil::CONTACTLESS_READER_NAME_REGEX);
 
-    std::dynamic_pointer_cast<ConfigurableReader>(reader) 
-        ->activateProtocol(MIFARE_CLASSIC, MIFARE_CLASSIC);
-
-    logger->info("=============== UseCase Generic #2: protocol based card selection " \
+    logger->info("=============== UseCase Generic #3: AID based card selection " \
                  "==================\n");
 
     /* Check if a card is present in the reader */
@@ -97,15 +94,16 @@ int main()
         return 0;
     }
 
-    logger->info("= #### Select the card if the protocol is '%'\n", MIFARE_CLASSIC);
+    logger->info("= #### Select the card if its DF Name matches '%'\n", 
+                 ConfigurationUtil::AID_EMV_PPSE);
 
     /* Get the core card selection manager */
     std::shared_ptr<CardSelectionManager> cardSelectionManager = 
         smartCardService.createCardSelectionManager();
 
-    /*  Create a card selection using the generic card extension and specifying a Mifare filter. */
+    /*  Create a card selection using the generic card extension and specifying a DfName filter. */
     std::shared_ptr<GenericCardSelection> cardSelection = cardExtension.createCardSelection();
-    cardSelection->filterByCardProtocol(MIFARE_CLASSIC);
+    cardSelection->filterByDfName(ConfigurationUtil::AID_EMV_PPSE);
 
     /*
      * Prepare the selection by adding the created generic selection to the card selection scenario

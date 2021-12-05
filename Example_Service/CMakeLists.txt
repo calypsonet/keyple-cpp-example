@@ -73,3 +73,9 @@ ADD_EXECUTABLE(${USECASE2}
                ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/ConfigurationUtil.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/src/main/${USECASE2}/Main_ProtocolBasedSelection_Pcsc.cpp)
 TARGET_LINK_LIBRARIES(${USECASE2} ${KEYPLE_CARD_LIB} ${KEYPLE_PCSC_LIB} ${KEYPLE_SERVICE_LIB} ${KEYPLE_UTIL_LIB})
+
+SET(USECASE3 UseCase3_AidBasedSelection)
+ADD_EXECUTABLE(${USECASE3} 
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/ConfigurationUtil.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/${USECASE3}/Main_AidBasedSelection_Pcsc.cpp)
+TARGET_LINK_LIBRARIES(${USECASE3} ${KEYPLE_CARD_LIB} ${KEYPLE_PCSC_LIB} ${KEYPLE_SERVICE_LIB} ${KEYPLE_UTIL_LIB})
