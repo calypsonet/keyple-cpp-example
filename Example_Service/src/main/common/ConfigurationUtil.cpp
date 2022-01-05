@@ -35,10 +35,10 @@ const std::string ConfigurationUtil::AID_KEYPLE_PREFIX = "315449432E";
 const std::string ConfigurationUtil::CONTACTLESS_READER_NAME_REGEX = ".*ASK LoGO.*|.*Contactless.*|.*ACR122U.*|.*00 01.*";
 const std::string ConfigurationUtil::CONTACT_READER_NAME_REGEX = ".*Identive.*|.*HID.*|.*00 00.*";
 
-const std::unique_ptr<Logger> ConfigurationUtil::mLogger = 
+const std::unique_ptr<Logger> ConfigurationUtil::mLogger =
     LoggerFactory::getLogger(typeid(ConfigurationUtil));
 
-std::shared_ptr<Reader> ConfigurationUtil::getCardReader(std::shared_ptr<Plugin> plugin, 
+std::shared_ptr<Reader> ConfigurationUtil::getCardReader(std::shared_ptr<Plugin> plugin,
                                                          const std::string& readerNameRegex)
 {
     for (const auto& readerName : plugin->getReaderNames()) {
@@ -46,21 +46,21 @@ std::shared_ptr<Reader> ConfigurationUtil::getCardReader(std::shared_ptr<Plugin>
             auto reader = std::dynamic_pointer_cast<ConfigurableReader>(plugin->getReader(readerName));
 
             /* Configure the reader with parameters suitable for contactless operations */
-            std::shared_ptr<PcscReader> pcscReader = 
-                std::dynamic_pointer_cast<PcscReader>(reader->getExtension(typeid(PcscReader)));
+            std::shared_ptr<KeypleReaderExtension> ext = reader->getExtension(typeid(PcscReader));
+            auto pcscReader = std::dynamic_pointer_cast<PcscReader>(ext);
             pcscReader->setContactless(true)
-                    .setIsoProtocol(PcscReader::IsoProtocol::T1)
-                    .setSharingMode(PcscReader::SharingMode::SHARED);
+                       .setIsoProtocol(PcscReader::IsoProtocol::T1)
+                       .setSharingMode(PcscReader::SharingMode::SHARED);
             reader->activateProtocol("ISO_14443_4", "ISO_14443_4");
-            
+
             mLogger->info("Card reader, plugin; %, name: %\n", plugin->getName(), reader->getName());
-            
+
             return reader;
         }
     }
 
     throw IllegalStateException("Reader " +
-                                readerNameRegex + 
-                                " not found in plugin " + 
+                                readerNameRegex +
+                                " not found in plugin " +
                                 plugin->getName());
 }
