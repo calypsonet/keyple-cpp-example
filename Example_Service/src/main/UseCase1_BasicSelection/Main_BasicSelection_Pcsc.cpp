@@ -72,20 +72,22 @@ int main()
      * Register the PcscPlugin with the SmartCardService, get the corresponding generic plugin in
      * return.
      */
-    std::shared_ptr<Plugin> plugin = 
+    std::shared_ptr<Plugin> plugin =
         smartCardService.registerPlugin(PcscPluginFactoryBuilder::builder()->build());
 
     /* Get the generic card extension service */
-    GenericExtensionService& cardExtension = GenericExtensionService::getInstance();
+    std::shared_ptr<GenericExtensionService> cardExtension = GenericExtensionService::getInstance();
 
     /* Verify that the extension's API level is consistent with the current service */
-    smartCardService.checkCardExtension(std::make_shared<GenericExtensionService>(cardExtension));
+    smartCardService.checkCardExtension(cardExtension);
 
     /* Get the contactless reader whose name matches the provided regex */
     std::shared_ptr<Reader> reader =
         ConfigurationUtil::getCardReader(plugin, ConfigurationUtil::CONTACTLESS_READER_NAME_REGEX);
 
-    logger->info("=============== UseCase Generic #1: basic card selection ==================\n");
+    logger->info("=============== " \
+                 "UseCase Generic #1: basic card selection " \
+                 "==================\n");
 
     /* Check if a card is present in the reader */
     if (!reader->isCardPresent()) {
@@ -96,14 +98,14 @@ int main()
     logger->info("= #### Select the card with no conditions\n");
 
     /* Get the core card selection manager */
-    std::shared_ptr<CardSelectionManager> cardSelectionManager = 
+    std::shared_ptr<CardSelectionManager> cardSelectionManager =
         smartCardService.createCardSelectionManager();
 
-    /* 
+    /*
      * Create a card selection using the generic card extension without specifying any filter
      * (protocol/power-on data/DFName).
      */
-    std::shared_ptr<CardSelection> cardSelection = cardExtension.createCardSelection();
+    std::shared_ptr<CardSelection> cardSelection = cardExtension->createCardSelection();
 
     /*
      * Prepare the selection by adding the created generic selection to the card selection scenario
@@ -111,7 +113,7 @@ int main()
     cardSelectionManager->prepareSelection(cardSelection);
 
     /* Actual card communication: run the selection scenario */
-    std::shared_ptr<CardSelectionResult> selectionResult = 
+    std::shared_ptr<CardSelectionResult> selectionResult =
         cardSelectionManager->processCardSelectionScenario(reader);
 
     /* Check the selection result */
@@ -128,10 +130,10 @@ int main()
     const std::vector<uint8_t> cplcApdu = ByteArrayUtil::fromHex("80CA9F7F00");
 
     const std::vector<std::string> apduResponses =
-        cardExtension.createCardTransaction(reader, smartCard)
-                    ->prepareApdu(cplcApdu)
-                     .prepareReleaseChannel()
-                     .processApdusToHexStrings();
+        cardExtension->createCardTransaction(reader, smartCard)
+                     ->prepareApdu(cplcApdu)
+                      .prepareReleaseChannel()
+                      .processApdusToHexStrings();
 
     logger->info("CPLC Data: '%'\n", apduResponses[0]);
 

@@ -178,10 +178,10 @@ int main()
         smartCardService.registerPlugin(StubPluginFactoryBuilder::builder()->build());
 
     /* Get the generic card extension service */
-    GenericExtensionService& cardExtension = GenericExtensionService::getInstance();
+    std::shared_ptr<GenericExtensionService> cardExtension = GenericExtensionService::getInstance();
 
     /* Verify that the extension's API level is consistent with the current service */
-    smartCardService.checkCardExtension(std::make_shared<GenericExtensionService>(cardExtension));
+    smartCardService.checkCardExtension(cardExtension);
 
     logger->info("=============== " \
                  "UseCase Resource Service #1: card resource service " \
@@ -192,22 +192,22 @@ int main()
      * A.
      */
     std::shared_ptr<GenericCardSelection> cardSelectionA =
-        GenericExtensionService::getInstance().createCardSelection();
+        GenericExtensionService::getInstance()->createCardSelection();
     cardSelectionA->filterByPowerOnData(ATR_REGEX_A);
 
     std::shared_ptr<CardResourceProfileExtension> cardResourceExtensionA =
-        GenericExtensionService::getInstance().createCardResourceProfileExtension(cardSelectionA);
+        GenericExtensionService::getInstance()->createCardResourceProfileExtension(cardSelectionA);
 
     /*
      * Create a card resource extension B expecting a card having power-on data matching the regex
      * B.
      */
     std::shared_ptr<GenericCardSelection> cardSelectionB =
-        GenericExtensionService::getInstance().createCardSelection();
+        GenericExtensionService::getInstance()->createCardSelection();
     cardSelectionB->filterByPowerOnData(ATR_REGEX_B);
 
     std::shared_ptr<CardResourceProfileExtension> cardResourceExtensionB =
-        GenericExtensionService::getInstance().createCardResourceProfileExtension(cardSelectionB);
+        GenericExtensionService::getInstance()->createCardResourceProfileExtension(cardSelectionB);
 
     /* Get the service */
     std::shared_ptr<CardResourceService> cardResourceService = CardResourceServiceProvider::getService();

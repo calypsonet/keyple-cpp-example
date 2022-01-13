@@ -60,7 +60,7 @@ using namespace keyple::plugin::pcsc;
  */
 class Main_ProtocolBasedSelection_Pcsc {};
 const std::string MIFARE_CLASSIC = "MIFARE_CLASSIC";
-const std::unique_ptr<Logger> logger = 
+const std::unique_ptr<Logger> logger =
     LoggerFactory::getLogger(typeid(Main_ProtocolBasedSelection_Pcsc));
 
 int main()
@@ -72,23 +72,24 @@ int main()
      * Register the PcscPlugin with the SmartCardService, get the corresponding generic plugin in
      * return.
      */
-    std::shared_ptr<Plugin> plugin = 
+    std::shared_ptr<Plugin> plugin =
         smartCardService.registerPlugin(PcscPluginFactoryBuilder::builder()->build());
 
     /* Get the generic card extension service */
-    GenericExtensionService& cardExtension = GenericExtensionService::getInstance();
+    std::shared_ptr<GenericExtensionService> cardExtension = GenericExtensionService::getInstance();
 
     /* Verify that the extension's API level is consistent with the current service */
-    smartCardService.checkCardExtension(std::make_shared<GenericExtensionService>(cardExtension));
+    smartCardService.checkCardExtension(cardExtension);
 
     /* Get the contactless reader whose name matches the provided regex */
     std::shared_ptr<Reader> reader =
         ConfigurationUtil::getCardReader(plugin, ConfigurationUtil::CONTACTLESS_READER_NAME_REGEX);
 
-    std::dynamic_pointer_cast<ConfigurableReader>(reader) 
+    std::dynamic_pointer_cast<ConfigurableReader>(reader)
         ->activateProtocol(MIFARE_CLASSIC, MIFARE_CLASSIC);
 
-    logger->info("=============== UseCase Generic #2: protocol based card selection " \
+    logger->info("=============== " \
+                 "UseCase Generic #2: protocol based card selection " \
                  "==================\n");
 
     /* Check if a card is present in the reader */
@@ -100,11 +101,11 @@ int main()
     logger->info("= #### Select the card if the protocol is '%'\n", MIFARE_CLASSIC);
 
     /* Get the core card selection manager */
-    std::shared_ptr<CardSelectionManager> cardSelectionManager = 
+    std::shared_ptr<CardSelectionManager> cardSelectionManager =
         smartCardService.createCardSelectionManager();
 
     /*  Create a card selection using the generic card extension and specifying a Mifare filter. */
-    std::shared_ptr<GenericCardSelection> cardSelection = cardExtension.createCardSelection();
+    std::shared_ptr<GenericCardSelection> cardSelection = cardExtension->createCardSelection();
     cardSelection->filterByCardProtocol(MIFARE_CLASSIC);
 
     /*
@@ -113,7 +114,7 @@ int main()
     cardSelectionManager->prepareSelection(cardSelection);
 
     /* Actual card communication: run the selection scenario */
-    std::shared_ptr<CardSelectionResult> selectionResult = 
+    std::shared_ptr<CardSelectionResult> selectionResult =
         cardSelectionManager->processCardSelectionScenario(reader);
 
     /* Check the selection result */

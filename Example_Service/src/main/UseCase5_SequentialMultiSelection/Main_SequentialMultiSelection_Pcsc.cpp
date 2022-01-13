@@ -123,10 +123,10 @@ int main()
         ConfigurationUtil::getCardReader(plugin, ConfigurationUtil::CONTACTLESS_READER_NAME_REGEX);
 
     /* Get the generic card extension service */
-    GenericExtensionService& cardExtension = GenericExtensionService::getInstance();
+    std::shared_ptr<GenericExtensionService> cardExtension = GenericExtensionService::getInstance();
 
     /* Verify that the extension's API level is consistent with the current service */
-    smartCardService.checkCardExtension(std::make_shared<GenericExtensionService>(cardExtension));
+    smartCardService.checkCardExtension(cardExtension);
 
     logger->info("=============== " \
                  "UseCase Generic #5: sequential selections based on an AID prefix " \
@@ -148,7 +148,7 @@ int main()
      * AID based selection: get the first application occurrence matching the AID, keep the
      * physical channel open
      */
-    std::shared_ptr<GenericCardSelection> cardSelection = cardExtension.createCardSelection();
+    std::shared_ptr<GenericCardSelection> cardSelection = cardExtension->createCardSelection();
     cardSelection->filterByDfName(ConfigurationUtil::AID_KEYPLE_PREFIX);
     cardSelection->setFileOccurrence(GenericCardSelection::FileOccurrence::FIRST);
 
@@ -164,7 +164,7 @@ int main()
      * New selection: get the next application occurrence matching the same AID, close the
      * physical channel after
      */
-    cardSelection = cardExtension.createCardSelection();
+    cardSelection = cardExtension->createCardSelection();
     cardSelection->filterByDfName(ConfigurationUtil::AID_KEYPLE_PREFIX);
     cardSelection->setFileOccurrence(GenericCardSelection::FileOccurrence::NEXT);
 

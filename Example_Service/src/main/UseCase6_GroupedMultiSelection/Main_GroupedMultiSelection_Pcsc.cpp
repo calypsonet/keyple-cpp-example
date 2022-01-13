@@ -88,10 +88,10 @@ int main()
         ConfigurationUtil::getCardReader(plugin, ConfigurationUtil::CONTACTLESS_READER_NAME_REGEX);
 
     /* Get the generic card extension service */
-    GenericExtensionService& cardExtension = GenericExtensionService::getInstance();
+    std::shared_ptr<GenericExtensionService> cardExtension = GenericExtensionService::getInstance();
 
     /* Verify that the extension's API level is consistent with the current service */
-    smartCardService.checkCardExtension(std::make_shared<GenericExtensionService>(cardExtension));
+    smartCardService.checkCardExtension(cardExtension);
 
     logger->info("=============== " \
                  "UseCase Generic #6: Grouped selections based on an AID prefix " \
@@ -117,7 +117,7 @@ int main()
      * physical channel open.
      * Prepare the selection by adding the created generic selection to the card selection scenario.
      */
-    std::shared_ptr<GenericCardSelection> cardSelection = cardExtension.createCardSelection();
+    std::shared_ptr<GenericCardSelection> cardSelection = cardExtension->createCardSelection();
     cardSelection->filterByDfName(ConfigurationUtil::AID_KEYPLE_PREFIX);
     cardSelection->setFileOccurrence(GenericCardSelection::FileOccurrence::FIRST);
     cardSelectionManager->prepareSelection(cardSelection);
@@ -127,7 +127,7 @@ int main()
      * physical channel after.
      * Prepare the selection by adding the created generic selection to the card selection scenario.
      */
-    cardSelection = cardExtension.createCardSelection();
+    cardSelection = cardExtension->createCardSelection();
     cardSelection->filterByDfName(ConfigurationUtil::AID_KEYPLE_PREFIX);
     cardSelection->setFileOccurrence(GenericCardSelection::FileOccurrence::NEXT);
     cardSelectionManager->prepareSelection(cardSelection);

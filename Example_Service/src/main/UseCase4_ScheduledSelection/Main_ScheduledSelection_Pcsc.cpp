@@ -59,11 +59,11 @@ using namespace keyple::plugin::pcsc;
  * <p>Any unexpected behavior will result in runtime exceptions.
  */
 class Main_ScheduledSelection_Pcsc {};
-const std::unique_ptr<Logger> logger = 
+const std::unique_ptr<Logger> logger =
     LoggerFactory::getLogger(typeid(Main_ScheduledSelection_Pcsc));
 
 int main()
-{    
+{
     /* Get the instance of the SmartCardService (singleton pattern) */
     SmartCardService& smartCardService = SmartCardServiceProvider::getService();
 
@@ -71,7 +71,7 @@ int main()
      * Register the PcscPlugin with the SmartCardService, get the corresponding generic plugin in
      * return.
      */
-    std::shared_ptr<Plugin> plugin = 
+    std::shared_ptr<Plugin> plugin =
         smartCardService.registerPlugin(PcscPluginFactoryBuilder::builder()->build());
 
     /* Get the contactless reader whose name matches the provided regex */
@@ -79,14 +79,14 @@ int main()
         ConfigurationUtil::getCardReader(plugin, ConfigurationUtil::CONTACTLESS_READER_NAME_REGEX);
 
     /* Activate the ISO14443 card protocol */
-    std::dynamic_pointer_cast<ConfigurableReader>(reader) 
+    std::dynamic_pointer_cast<ConfigurableReader>(reader)
         ->activateProtocol("ISO_14443_4", "ISO_14443_4.name");
 
     /* Get the generic card extension service */
-    GenericExtensionService& cardExtension = GenericExtensionService::getInstance();
+    std::shared_ptr<GenericExtensionService> cardExtension = GenericExtensionService::getInstance();
 
     /* Verify that the extension's API level is consistent with the current service */
-    smartCardService.checkCardExtension(std::make_shared<GenericExtensionService>(cardExtension));
+    smartCardService.checkCardExtension(cardExtension);
 
     logger->info("=============== " \
                  "UseCase Generic #4: scheduled AID based selection " \
@@ -95,11 +95,11 @@ int main()
     logger->info("= #### Select application with AID = '%'\n", ConfigurationUtil::AID_EMV_PPSE);
 
     /* Get the core card selection manager */
-    std::shared_ptr<CardSelectionManager> cardSelectionManager = 
+    std::shared_ptr<CardSelectionManager> cardSelectionManager =
         smartCardService.createCardSelectionManager();
 
     /* Create a card selection using the generic card extension */
-    std::shared_ptr<GenericCardSelection> cardSelection = cardExtension.createCardSelection();
+    std::shared_ptr<GenericCardSelection> cardSelection = cardExtension->createCardSelection();
     cardSelection->filterByCardProtocol("ISO_14443_4");
     cardSelection->filterByDfName(ConfigurationUtil::AID_EMV_PPSE);
 
