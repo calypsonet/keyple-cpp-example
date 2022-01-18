@@ -46,6 +46,11 @@ public:
                        std::shared_ptr<CardSelectionManager> cardSelectionManager);
 
     /**
+     * 
+     */
+    virtual ~CardReaderObserver() = default;
+    
+    /**
      * {@inheritDoc}
      *
      * @since 2.0.0

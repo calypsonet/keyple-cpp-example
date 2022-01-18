@@ -93,6 +93,16 @@ static const std::string READER_NAME_REGEX_B = ".*_B";
 class ReaderConfigurator : public ReaderConfiguratorSpi {
 public:
     /**
+     * Constructor.
+     */
+    ReaderConfigurator() {}
+
+    /**
+     * 
+     */
+    virtual ~ReaderConfigurator() = default;
+
+    /**
      * {@inheritDoc}
      */
     void setupReader(std::shared_ptr<Reader> reader) override {
@@ -106,17 +116,11 @@ public:
         }
     }
 
-    /**
-     * Constructor.
-     */
-    ReaderConfigurator() {}
-
 private:
     /**
      *
      */
     const std::unique_ptr<Logger> logger = LoggerFactory::getLogger(typeid(ReaderConfigurator));
-
 };
 
 /**
@@ -126,12 +130,23 @@ class PluginAndReaderExceptionHandler
 : public PluginObservationExceptionHandlerSpi,
   public CardReaderObservationExceptionHandlerSpi {
 public:
+    /**
+     * 
+     */
+    virtual ~PluginAndReaderExceptionHandler() = default;
+
+    /**
+     * 
+     */
     void onPluginObservationError(const std::string& pluginName, const std::shared_ptr<Exception> e)
         override
     {
         logger->error("An exception occurred while monitoring the plugin '%'\n", pluginName, e);
     }
 
+    /**
+     * 
+     */
     void onReaderObservationError(const std::string& pluginName,
                                   const std::string& readerName,
                                   const std::shared_ptr<Exception> e) override

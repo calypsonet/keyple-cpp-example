@@ -38,6 +38,11 @@ using namespace keyple::core::util::cpp;
 class PluginObserver : public PluginObserverSpi, public PluginObservationExceptionHandlerSpi {
 public:
     /**
+     * 
+     */
+    virtual ~PluginObserver() = default;
+    
+    /**
      * (package-private)<br>
      * Constructor.
      *

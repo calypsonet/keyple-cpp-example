@@ -35,6 +35,11 @@ class ReaderObserver
 : public CardReaderObserverSpi, public CardReaderObservationExceptionHandlerSpi {
 public:
     /**
+     * 
+     */
+    virtual ~ReaderObserver() = default;
+    
+    /**
      *
      */
     void onReaderEvent(const std::shared_ptr<CardReaderEvent> event) override;
