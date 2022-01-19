@@ -80,5 +80,10 @@ TARGET_LINK_LIBRARIES(${USECASE1}
                       ${KEYPLE_SERVICE_LIB}
                       ${KEYPLE_RESOURCE_LIB}
                       ${KEYPLE_UTIL_LIB}
+)
 
-                      pthread)
+IF(APPLE)
+    TARGET_LINK_LIBRARIES(${USECASE1} pthread)
+ELSEIF(UNIX)
+    TARGET_LINK_LIBRARIES(${USECASE1} pthread)
+ENDIF(APPLE)
