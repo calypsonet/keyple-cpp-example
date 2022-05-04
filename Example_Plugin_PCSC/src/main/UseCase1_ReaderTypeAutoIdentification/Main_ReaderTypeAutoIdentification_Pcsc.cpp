@@ -64,14 +64,14 @@ static const std::unique_ptr<Logger> logger =
 int main()
 {
     /* Get the instance of the SmartCardService (singleton pattern) */
-    SmartCardService& smartCardService = SmartCardServiceProvider::getService();
+    std::shared_ptr<SmartCardService> smartCardService = SmartCardServiceProvider::getService();
 
     /*
      * Register the PcscPlugin with the SmartCardService, set the two regular expression matching
      * the expected devices, get the corresponding generic plugin in return.
      */
     std::shared_ptr<Plugin> plugin =
-        smartCardService.registerPlugin(
+        smartCardService->registerPlugin(
             PcscPluginFactoryBuilder::builder()
                 ->useContactlessReaderIdentificationFilter(
                     ".*ASK LoGO.*|.*HID OMNIKEY 5427 CK.*|.*contactless.*|.*00 01.*")

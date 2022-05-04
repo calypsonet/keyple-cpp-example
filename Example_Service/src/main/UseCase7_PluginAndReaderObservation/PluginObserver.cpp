@@ -42,9 +42,9 @@ void PluginObserver::onPluginEvent(const std::shared_ptr<PluginEvent> event)
 {
     for (const auto& readerName : event->getReaderNames()) {
         /* We retrieve the reader object from its name */
-        std::shared_ptr<Reader> reader = SmartCardServiceProvider::getService()
-                                            .getPlugin(event->getPluginName())
-                                            ->getReader(readerName);
+        std::shared_ptr<Reader> reader =
+            SmartCardServiceProvider::getService()->getPlugin(event->getPluginName())
+                                                  ->getReader(readerName);
 
         mLogger->info("PluginEvent: PLUGINNAME = %, READERNAME = %, Type = %\n",
                       event->getPluginName(),

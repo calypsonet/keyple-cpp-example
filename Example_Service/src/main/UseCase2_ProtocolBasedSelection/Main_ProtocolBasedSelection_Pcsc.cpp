@@ -66,20 +66,20 @@ const std::unique_ptr<Logger> logger =
 int main()
 {
     /* Get the instance of the SmartCardService (singleton pattern) */
-    SmartCardService& smartCardService = SmartCardServiceProvider::getService();
+    std::shared_ptr<SmartCardService> smartCardService = SmartCardServiceProvider::getService();
 
     /*
      * Register the PcscPlugin with the SmartCardService, get the corresponding generic plugin in
      * return.
      */
     std::shared_ptr<Plugin> plugin =
-        smartCardService.registerPlugin(PcscPluginFactoryBuilder::builder()->build());
+        smartCardService->registerPlugin(PcscPluginFactoryBuilder::builder()->build());
 
     /* Get the generic card extension service */
     std::shared_ptr<GenericExtensionService> cardExtension = GenericExtensionService::getInstance();
 
     /* Verify that the extension's API level is consistent with the current service */
-    smartCardService.checkCardExtension(cardExtension);
+    smartCardService->checkCardExtension(cardExtension);
 
     /* Get the contactless reader whose name matches the provided regex */
     std::shared_ptr<Reader> reader =
@@ -102,7 +102,7 @@ int main()
 
     /* Get the core card selection manager */
     std::shared_ptr<CardSelectionManager> cardSelectionManager =
-        smartCardService.createCardSelectionManager();
+        smartCardService->createCardSelectionManager();
 
     /*  Create a card selection using the generic card extension and specifying a Mifare filter. */
     std::shared_ptr<GenericCardSelection> cardSelection = cardExtension->createCardSelection();

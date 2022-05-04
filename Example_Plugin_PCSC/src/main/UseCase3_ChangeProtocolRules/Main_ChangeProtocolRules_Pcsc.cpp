@@ -73,14 +73,14 @@ static const std::string CARD_PROTOCOL_MIFARE_CLASSIC_4_K = "MIFARE_CLASSIC_4K";
 int main()
 {
     /* Get the instance of the SmartCardService (singleton pattern) */
-    SmartCardService& smartCardService = SmartCardServiceProvider::getService();
+    std::shared_ptr<SmartCardService> smartCardService = SmartCardServiceProvider::getService();
 
     /*
      * Register the PcscPlugin with the SmartCardService, set the two regular expression matching
      * the expected devices, get the corresponding generic plugin in return.
      */
     std::shared_ptr<Plugin> plugin =
-        smartCardService.registerPlugin(
+        smartCardService->registerPlugin(
             PcscPluginFactoryBuilder::builder()
                 ->updateProtocolIdentificationRule(
                     READER_PROTOCOL_MIFARE_CLASSIC_4_K, "3B8F8001804F0CA0000003060300020000000069")
@@ -102,7 +102,7 @@ int main()
     std::shared_ptr<GenericExtensionService> cardExtension = GenericExtensionService::getInstance();
 
     /* Verify that the extension's API level is consistent with the current service */
-    smartCardService.checkCardExtension(cardExtension);
+    smartCardService->checkCardExtension(cardExtension);
 
     /* Check if a card is present in the reader */
     if (!reader->isCardPresent()) {
@@ -112,7 +112,7 @@ int main()
 
     /* Get the core card selection manager */
     std::unique_ptr<CardSelectionManager> cardSelectionManager =
-        smartCardService.createCardSelectionManager();
+        smartCardService->createCardSelectionManager();
 
     /*
      * Create a card selection using the generic card extension without specifying any filter

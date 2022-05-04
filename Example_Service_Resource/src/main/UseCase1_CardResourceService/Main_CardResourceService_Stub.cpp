@@ -98,7 +98,7 @@ public:
     ReaderConfigurator() {}
 
     /**
-     * 
+     *
      */
     virtual ~ReaderConfigurator() = default;
 
@@ -131,12 +131,12 @@ class PluginAndReaderExceptionHandler
   public CardReaderObservationExceptionHandlerSpi {
 public:
     /**
-     * 
+     *
      */
     virtual ~PluginAndReaderExceptionHandler() = default;
 
     /**
-     * 
+     *
      */
     void onPluginObservationError(const std::string& pluginName, const std::shared_ptr<Exception> e)
         override
@@ -145,7 +145,7 @@ public:
     }
 
     /**
-     * 
+     *
      */
     void onReaderObservationError(const std::string& pluginName,
                                   const std::string& readerName,
@@ -183,20 +183,20 @@ static char getInput()
 int main()
 {
     /* Get the instance of the SmartCardService (singleton pattern) */
-    SmartCardService& smartCardService = SmartCardServiceProvider::getService();
+    std::shared_ptr<SmartCardService> smartCardService = SmartCardServiceProvider::getService();
 
     /*
      * Register the StubPlugin with the SmartCardService, get the corresponding generic plugin in
      * return.
      */
     std::shared_ptr<Plugin> plugin =
-        smartCardService.registerPlugin(StubPluginFactoryBuilder::builder()->build());
+        smartCardService->registerPlugin(StubPluginFactoryBuilder::builder()->build());
 
     /* Get the generic card extension service */
     std::shared_ptr<GenericExtensionService> cardExtension = GenericExtensionService::getInstance();
 
     /* Verify that the extension's API level is consistent with the current service */
-    smartCardService.checkCardExtension(cardExtension);
+    smartCardService->checkCardExtension(cardExtension);
 
     logger->info("=============== " \
                  "UseCase Resource Service #1: card resource service " \
@@ -350,7 +350,7 @@ int main()
     }
 
     /* Unregister plugin */
-    smartCardService.unregisterPlugin(plugin->getName());
+    smartCardService->unregisterPlugin(plugin->getName());
 
     logger->info("Exit program\n");
 

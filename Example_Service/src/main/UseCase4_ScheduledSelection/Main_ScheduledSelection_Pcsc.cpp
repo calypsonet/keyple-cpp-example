@@ -65,14 +65,14 @@ const std::unique_ptr<Logger> logger =
 int main()
 {
     /* Get the instance of the SmartCardService (singleton pattern) */
-    SmartCardService& smartCardService = SmartCardServiceProvider::getService();
+    std::shared_ptr<SmartCardService> smartCardService = SmartCardServiceProvider::getService();
 
     /*
      * Register the PcscPlugin with the SmartCardService, get the corresponding generic plugin in
      * return.
      */
     std::shared_ptr<Plugin> plugin =
-        smartCardService.registerPlugin(PcscPluginFactoryBuilder::builder()->build());
+        smartCardService->registerPlugin(PcscPluginFactoryBuilder::builder()->build());
 
     /* Get the contactless reader whose name matches the provided regex */
     std::shared_ptr<Reader> reader =
@@ -86,7 +86,7 @@ int main()
     std::shared_ptr<GenericExtensionService> cardExtension = GenericExtensionService::getInstance();
 
     /* Verify that the extension's API level is consistent with the current service */
-    smartCardService.checkCardExtension(cardExtension);
+    smartCardService->checkCardExtension(cardExtension);
 
     logger->info("=============== " \
                  "UseCase Generic #4: scheduled AID based selection " \
@@ -96,8 +96,7 @@ int main()
 
     /* Get the core card selection manager */
     std::shared_ptr<CardSelectionManager> cardSelectionManager =
-        smartCardService.createCardSelectionManager();
-
+        smartCardService->createCardSelectionManager();
     /* Create a card selection using the generic card extension */
     std::shared_ptr<GenericCardSelection> cardSelection = cardExtension->createCardSelection();
     cardSelection->filterByCardProtocol("ISO_14443_4");
@@ -125,7 +124,7 @@ int main()
                  "soon as a card is detected\n");
 
     /* Unregister plugin */
-    smartCardService.unregisterPlugin(plugin->getName());
+    smartCardService->unregisterPlugin(plugin->getName());
 
     logger->info("Exit program\n");
 

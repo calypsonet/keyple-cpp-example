@@ -29,9 +29,9 @@ void ReaderObserver::onReaderEvent(const std::shared_ptr<CardReaderEvent> event)
 
     if (event->getType() != CardReaderEvent::Type::CARD_REMOVED) {
         auto readerEvent = std::dynamic_pointer_cast<ReaderEvent>(event);
-        std::shared_ptr<Reader> reader = SmartCardServiceProvider::getService()
-                                             .getPlugin(readerEvent->getPluginName())
-                                            ->getReader(event->getReaderName());
+        std::shared_ptr<Reader> reader =
+            SmartCardServiceProvider::getService()->getPlugin(readerEvent->getPluginName())
+                                                  ->getReader(event->getReaderName());
         std::dynamic_pointer_cast<ObservableReader>(reader)->finalizeCardProcessing();
     }
 }
