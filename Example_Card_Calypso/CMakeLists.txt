@@ -93,3 +93,52 @@ ADD_EXECUTABLE(${USECASE1_PCSC}
                ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/ConfigurationUtil.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/src/main/${USECASE1}/Main_ExplicitSelectionAid_Pcsc.cpp)
 TARGET_LINK_LIBRARIES(${USECASE1_PCSC} ${KEYPLE_CARD_LIB} ${KEYPLE_PCSC_LIB} ${KEYPLE_SERVICE_LIB} ${KEYPLE_UTIL_LIB} ${KEYPLE_CALYPSO_LIB} ${KEYPLE_RESOURCE_LIB} pthread)
+
+SET(USECASE2 UseCase2_ScheduledSelection)
+SET(USECASE2_STUB ${USECASE2}_Stub)
+ADD_EXECUTABLE(${USECASE2_STUB}
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/CalypsoConstants.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/StubSmartCardFactory.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/${USECASE2}/CardReaderObserver.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/${USECASE2}/Main_ScheduledSelection_Stub.cpp)
+TARGET_LINK_LIBRARIES(${USECASE2_STUB} ${KEYPLE_CARD_LIB} ${KEYPLE_STUB_LIB} ${KEYPLE_SERVICE_LIB} ${KEYPLE_UTIL_LIB} ${KEYPLE_CALYPSO_LIB} ${KEYPLE_RESOURCE_LIB} pthread)
+
+SET(USECASE2_PCSC ${USECASE2}_Pcsc)
+ADD_EXECUTABLE(${USECASE2_PCSC}
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/CalypsoConstants.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/ConfigurationUtil.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/${USECASE2}/CardReaderObserver.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/${USECASE2}/Main_ScheduledSelection_Pcsc.cpp)
+TARGET_LINK_LIBRARIES(${USECASE2_PCSC} ${KEYPLE_CARD_LIB} ${KEYPLE_PCSC_LIB} ${KEYPLE_SERVICE_LIB} ${KEYPLE_UTIL_LIB} ${KEYPLE_CALYPSO_LIB} ${KEYPLE_RESOURCE_LIB} pthread)
+
+SET(USECASE3 UseCase3_Rev1Selection)
+SET(USECASE3_PCSC ${USECASE3}_Pcsc)
+ADD_EXECUTABLE(${USECASE3_PCSC}
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/CalypsoConstants.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/ConfigurationUtil.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/${USECASE3}/Main_Rev1Selection_Pcsc.cpp)
+TARGET_LINK_LIBRARIES(${USECASE3_PCSC} ${KEYPLE_CARD_LIB} ${KEYPLE_PCSC_LIB} ${KEYPLE_SERVICE_LIB} ${KEYPLE_UTIL_LIB} ${KEYPLE_CALYPSO_LIB} ${KEYPLE_RESOURCE_LIB} pthread)
+
+SET(USECASE4 UseCase4_CardAuthentication)
+SET(USECASE4_STUB ${USECASE4}_Stub)
+ADD_EXECUTABLE(${USECASE4_STUB}
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/CalypsoConstants.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/ConfigurationUtil.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/StubSmartCardFactory.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/${USECASE4}/Main_CardAuthentication_Stub.cpp)
+TARGET_LINK_LIBRARIES(${USECASE4_STUB} ${KEYPLE_CARD_LIB} ${KEYPLE_STUB_LIB} ${KEYPLE_PCSC_LIB} ${KEYPLE_SERVICE_LIB} ${KEYPLE_UTIL_LIB} ${KEYPLE_CALYPSO_LIB} ${KEYPLE_RESOURCE_LIB} pthread)
+
+SET(USECASE4_PCSC ${USECASE4}_Pcsc)
+ADD_EXECUTABLE(${USECASE4_PCSC}
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/CalypsoConstants.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/ConfigurationUtil.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/${USECASE4}/Main_CardAuthentication_Pcsc.cpp)
+TARGET_LINK_LIBRARIES(${USECASE4_PCSC} ${KEYPLE_CARD_LIB} ${KEYPLE_PCSC_LIB} ${KEYPLE_SERVICE_LIB} ${KEYPLE_UTIL_LIB} ${KEYPLE_CALYPSO_LIB} ${KEYPLE_RESOURCE_LIB} pthread)
+
+SET(USECASE5 UseCase5_MultipleSession)
+SET(USECASE5_PCSC ${USECASE5}_Pcsc)
+ADD_EXECUTABLE(${USECASE5_PCSC}
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/CalypsoConstants.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/ConfigurationUtil.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/${USECASE5}/Main_MultipleSession_Pcsc.cpp)
+TARGET_LINK_LIBRARIES(${USECASE5_PCSC} ${KEYPLE_CARD_LIB} ${KEYPLE_PCSC_LIB} ${KEYPLE_SERVICE_LIB} ${KEYPLE_UTIL_LIB} ${KEYPLE_CALYPSO_LIB} ${KEYPLE_RESOURCE_LIB} pthread)
