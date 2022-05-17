@@ -29,7 +29,7 @@ using namespace keyple::core::util::cpp;
 /**
  * A reader Observer handles card event such as CARD_INSERTED, CARD_MATCHED, CARD_REMOVED
  */
-class CardReaderObserver
+class CardReaderObserver final
 : public CardReaderObserverSpi, public CardReaderObservationExceptionHandlerSpi {
 public:
     /**
@@ -60,7 +60,7 @@ public:
      */
     void onReaderObservationError(const std::string& pluginName,
                                   const std::string& readerName,
-                                  const std::shared_ptr<Exception> e);
+                                  const std::shared_ptr<Exception> e) override;
 
 private:
     /**

@@ -53,10 +53,9 @@ using namespace keyple::plugin::pcsc;
 /**
  *
  *
- * <h1>Use Case Calypso 5 – Multiple sessions (PC/SC)</h1>
+ * <h1>Use Case Calypso 6 – Calypso Card Verify PIN (PC/SC)</h1>
  *
- * <p>We demonstrate here a simple way to bypass the card modification buffer limitation by using
- * the multiple session mode.
+ * <p>We demonstrate here the various operations around the PIN code checking.
  *
  * <h2>Scenario:</h2>
  *
@@ -65,10 +64,19 @@ using namespace keyple::plugin::pcsc;
  *   <li>Checks if an ISO 14443-4 card is in the reader, enables the card selection manager.
  *   <li>Attempts to select the specified card (here a Calypso card characterized by its AID) with
  *       an AID-based application selection scenario.
+ *   <li>Creates a {@link CardTransactionManager} without security.
+ *   <li>Verify the PIN code in plain mode with the correct code, display the remaining attempts
+ *       counter.
  *   <li>Creates a {@link CardTransactionManager} using {@link CardSecuritySetting} referencing the
  *       SAM profile defined in the card resource service.
- *   <li>Prepares and executes a number of modification commands that exceeds the number of commands
- *       allowed by the card's modification buffer size.
+ *   <li>Verify the PIN code in session in encrypted mode with the code, display the remaining
+ *       attempts counter.
+ *   <li>Verify the PIN code in session in encrypted mode with a bad code, display the remaining
+ *       attempts counter.
+ *   <li>Cancel the card transaction, re-open a new one.
+ *   <li>Verify the PIN code in session in encrypted mode with the code, display the remaining
+ *       attempts counter.
+ *   <li>Close the card transaction.
  * </ul>
  *
  * All results are logged with slf4j.
@@ -77,9 +85,9 @@ using namespace keyple::plugin::pcsc;
  *
  * @since 2.0.0
  */
-class Main_MultipleSesssion_Pcsc {};
+class Main_VerifyPin_Pcsc {};
 static const std::unique_ptr<Logger> logger =
-    LoggerFactory::getLogger(typeid(Main_MultipleSesssion_Pcsc));
+    LoggerFactory::getLogger(typeid(Main_VerifyPin_Pcsc));
 
 int main()
 {
@@ -100,7 +108,7 @@ int main()
     smartCardService->checkCardExtension(cardExtension);
 
     /*
-     * Get and setup the card reader
+     *Get and setup the card reader
      * We suppose here, we use a ASK LoGO contactless PC/SC reader as card reader.
      */
     std::shared_ptr<Reader> cardReader =
@@ -115,7 +123,9 @@ int main()
                                                  ConfigurationUtil::SAM_READER_NAME_REGEX,
                                                  CalypsoConstants::SAM_PROFILE_NAME);
 
-    logger->info("=============== UseCase Calypso #5: multiple sessions ==================\n");
+    logger->info("=============== " \
+                 "UseCase Calypso #5: Calypso card Verify PIN " \
+                 "================== \n");
 
     /* Check if a card is present in the reader */
     if (!cardReader->isCardPresent()) {
@@ -158,9 +168,17 @@ int main()
     logger->info("Calypso Serial Number = %\n",
                  ByteArrayUtil::toHex(calypsoCard->getApplicationSerialNumber()));
 
+    // Create the card transaction manager in secure mode.
+    std::shared_ptr<CardTransactionManager> cardTransaction =
+            cardExtension->createCardTransactionWithoutSecurity(cardReader, calypsoCard);
+
+    /* Verification of the PIN (correct) out of a secure session in plain mode */
+    cardTransaction->processVerifyPin(CalypsoConstants::PIN_OK);
+    logger->info("Remaining attempts #1: %\n", calypsoCard->getPinAttemptRemaining());
+
     /*
      * Create security settings that reference the same SAM profile requested from the card resource
-     * service.
+     * service, specifying the key ciphering key parameters.
      */
     std::shared_ptr<CardResource> samResource =
         CardResourceServiceProvider::getService()
@@ -170,39 +188,41 @@ int main()
         CalypsoExtensionService::getInstance()->createCardSecuritySetting();
     cardSecuritySetting->setSamResource(samResource->getReader(),
                                         std::dynamic_pointer_cast<CalypsoSam>(
-                                            samResource->getSmartCard()));
+                                            samResource->getSmartCard()))
+                        .setPinVerificationCipheringKey(
+                            CalypsoConstants::PIN_VERIFICATION_CIPHERING_KEY_KIF,
+                            CalypsoConstants::PIN_VERIFICATION_CIPHERING_KEY_KVC);
 
     try {
-        /* Performs file reads using the card transaction manager in secure mode */
-        std::shared_ptr<CardTransactionManager> cardTransaction =
+        /* create a secured card transaction */
+        cardTransaction =
             cardExtension->createCardTransaction(cardReader, calypsoCard, cardSecuritySetting);
+
+        /* Verification of the PIN (correct) out of a secure session in encrypted mode */
+        cardTransaction->processVerifyPin(CalypsoConstants::PIN_OK);
+
+        /* Log the current counter value (should be 3) */
+        logger->info("Remaining attempts #2: %\n", calypsoCard->getPinAttemptRemaining());
+
+        /* Verification of the PIN (incorrect) inside a secure session */
+        cardTransaction->processOpening(WriteAccessLevel::DEBIT);
+        try {
+            cardTransaction->processVerifyPin(CalypsoConstants::PIN_KO);
+        } catch (const Exception& ex) {
+            logger->error("PIN Exception: %\n", ex.getMessage());
+        }
+        /* Log the current counter value (should be 2) */
+        logger->error("Remaining attempts #3: %\n", calypsoCard->getPinAttemptRemaining());
+
+        /* Verification of the PIN (correct) inside a secure session with reading of the counter */
+        cardTransaction->prepareCheckPinStatus();
         cardTransaction->processOpening(WriteAccessLevel::DEBIT);
 
-        /*
-         * Compute the number of append records (29 bytes) commands that will overflow the card
-         * modifications buffer. Each append records will consume 35 (29 + 6) bytes in the
-         * buffer.
-         *
-         * We'll send one more command to demonstrate the MULTIPLE mode
-         */
-        /* note: not all Calypso card have this buffer size */
-        const int modificationsBufferSize = 430;
-
-        const int nbCommands = (modificationsBufferSize / 35) + 1;
-
-        logger->info("==== Send % Append Record commands. Modifications buffer capacity = % bytes" \
-                     " i.e. % 29-byte commands ====\n",
-                     nbCommands,
-                     modificationsBufferSize,
-                     modificationsBufferSize / 35);
-
-        for (int i = 0; i < nbCommands; i++) {
-            cardTransaction->prepareAppendRecord(
-                CalypsoConstants::SFI_EVENT_LOG,
-                ByteArrayUtil::fromHex(CalypsoConstants::EVENT_LOG_DATA_FILL));
-        }
-
-        cardTransaction->prepareReleaseCardChannel().processClosing();
+        /* Log the current counter value (should be 2) */
+        logger->info("Remaining attempts #4: %\n", calypsoCard->getPinAttemptRemaining());
+        cardTransaction->processVerifyPin(CalypsoConstants::PIN_OK);
+        cardTransaction->prepareReleaseCardChannel();
+        cardTransaction->processClosing();
     } catch (const Exception& e) {
         (void)e;
     }
@@ -214,8 +234,10 @@ int main()
         logger->error("Error during the card resource release: %\n", e.getMessage(), e);
     }
 
-    logger->info("The secure session has ended successfully, all data has been written to the " \
-                 "card's memory\n");
+    /* Log the current counter value (should be 3) */
+    logger->info("Remaining attempts #5: %\n", calypsoCard->getPinAttemptRemaining());
+
+    logger->info("The Secure Session ended successfully, the PIN has been verified\n");
 
     logger->info("= #### End of the Calypso card processing\n");
 

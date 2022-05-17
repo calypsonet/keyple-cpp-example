@@ -142,3 +142,27 @@ ADD_EXECUTABLE(${USECASE5_PCSC}
                ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/ConfigurationUtil.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/src/main/${USECASE5}/Main_MultipleSession_Pcsc.cpp)
 TARGET_LINK_LIBRARIES(${USECASE5_PCSC} ${KEYPLE_CARD_LIB} ${KEYPLE_PCSC_LIB} ${KEYPLE_SERVICE_LIB} ${KEYPLE_UTIL_LIB} ${KEYPLE_CALYPSO_LIB} ${KEYPLE_RESOURCE_LIB} pthread)
+
+SET(USECASE6 UseCase6_VerifyPin)
+SET(USECASE6_PCSC ${USECASE6}_Pcsc)
+ADD_EXECUTABLE(${USECASE6_PCSC}
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/CalypsoConstants.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/ConfigurationUtil.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/${USECASE6}/Main_VerifyPin_Pcsc.cpp)
+TARGET_LINK_LIBRARIES(${USECASE6_PCSC} ${KEYPLE_CARD_LIB} ${KEYPLE_PCSC_LIB} ${KEYPLE_SERVICE_LIB} ${KEYPLE_UTIL_LIB} ${KEYPLE_CALYPSO_LIB} ${KEYPLE_RESOURCE_LIB} pthread)
+
+SET(USECASE7 UseCase7_StoredValue_SimpleReload)
+SET(USECASE7_PCSC ${USECASE7}_Pcsc)
+ADD_EXECUTABLE(${USECASE7_PCSC}
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/CalypsoConstants.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/ConfigurationUtil.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/${USECASE7}/Main_StoredValue_SimpleReload_Pcsc.cpp)
+TARGET_LINK_LIBRARIES(${USECASE7_PCSC} ${KEYPLE_CARD_LIB} ${KEYPLE_PCSC_LIB} ${KEYPLE_SERVICE_LIB} ${KEYPLE_UTIL_LIB} ${KEYPLE_CALYPSO_LIB} ${KEYPLE_RESOURCE_LIB} pthread)
+
+SET(USECASE8 UseCase8_StoredValue_DebitInSession)
+SET(USECASE8_PCSC ${USECASE8}_Pcsc)
+ADD_EXECUTABLE(${USECASE8_PCSC}
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/CalypsoConstants.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/ConfigurationUtil.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/${USECASE8}/Main_StoredValue_DebitInSession_Pcsc.cpp)
+TARGET_LINK_LIBRARIES(${USECASE8_PCSC} ${KEYPLE_CARD_LIB} ${KEYPLE_PCSC_LIB} ${KEYPLE_SERVICE_LIB} ${KEYPLE_UTIL_LIB} ${KEYPLE_CALYPSO_LIB} ${KEYPLE_RESOURCE_LIB} pthread)

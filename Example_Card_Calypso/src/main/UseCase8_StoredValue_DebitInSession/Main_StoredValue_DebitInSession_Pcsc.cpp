@@ -53,10 +53,9 @@ using namespace keyple::plugin::pcsc;
 /**
  *
  *
- * <h1>Use Case Calypso 5 – Multiple sessions (PC/SC)</h1>
+ * <h1>Use Case Calypso 4 – Calypso Card authentication (PC/SC)</h1>
  *
- * <p>We demonstrate here a simple way to bypass the card modification buffer limitation by using
- * the multiple session mode.
+ * <p>We demonstrate here the debit of the Stored Value counter of a Calypso card.
  *
  * <h2>Scenario:</h2>
  *
@@ -67,8 +66,7 @@ using namespace keyple::plugin::pcsc;
  *       an AID-based application selection scenario.
  *   <li>Creates a {@link CardTransactionManager} using {@link CardSecuritySetting} referencing the
  *       SAM profile defined in the card resource service.
- *   <li>Prepares and executes a number of modification commands that exceeds the number of commands
- *       allowed by the card's modification buffer size.
+ *   <li>Displays the Stored Value status, debits the Store Value within a Secure Session.
  * </ul>
  *
  * All results are logged with slf4j.
@@ -77,13 +75,13 @@ using namespace keyple::plugin::pcsc;
  *
  * @since 2.0.0
  */
-class Main_MultipleSesssion_Pcsc {};
+class Main_StoredValue_DebitInSession_Pcsc {};
 static const std::unique_ptr<Logger> logger =
-    LoggerFactory::getLogger(typeid(Main_MultipleSesssion_Pcsc));
+    LoggerFactory::getLogger(typeid(Main_StoredValue_DebitInSession_Pcsc));
 
 int main()
 {
-    /* Get the instance of the SmartCardService (singleton pattern) */
+     /* Get the instance of the SmartCardService (singleton pattern) */
     std::shared_ptr<SmartCardService> smartCardService = SmartCardServiceProvider::getService();
 
     /*
@@ -115,7 +113,7 @@ int main()
                                                  ConfigurationUtil::SAM_READER_NAME_REGEX,
                                                  CalypsoConstants::SAM_PROFILE_NAME);
 
-    logger->info("=============== UseCase Calypso #5: multiple sessions ==================\n");
+    logger->info("=============== UseCase Calypso #8: Stored Value debit ==================\n");
 
     /* Check if a card is present in the reader */
     if (!cardReader->isCardPresent()) {
@@ -170,39 +168,28 @@ int main()
         CalypsoExtensionService::getInstance()->createCardSecuritySetting();
     cardSecuritySetting->setSamResource(samResource->getReader(),
                                         std::dynamic_pointer_cast<CalypsoSam>(
-                                            samResource->getSmartCard()));
+                                            samResource->getSmartCard()))
+                        .enableSvLoadAndDebitLog();
 
     try {
-        /* Performs file reads using the card transaction manager in secure mode */
+        /* Performs file reads using the card transaction manager in non-secure mode */
         std::shared_ptr<CardTransactionManager> cardTransaction =
             cardExtension->createCardTransaction(cardReader, calypsoCard, cardSecuritySetting);
-        cardTransaction->processOpening(WriteAccessLevel::DEBIT);
+        cardTransaction->prepareSvGet(SvOperation::DEBIT, SvAction::DO)
+                        .processOpening(WriteAccessLevel::DEBIT);
 
-        /*
-         * Compute the number of append records (29 bytes) commands that will overflow the card
-         * modifications buffer. Each append records will consume 35 (29 + 6) bytes in the
-         * buffer.
-         *
-         * We'll send one more command to demonstrate the MULTIPLE mode
-         */
-        /* note: not all Calypso card have this buffer size */
-        const int modificationsBufferSize = 430;
+        /* Display the current SV status */
+        logger->info("Current SV status (SV Get for RELOAD):\n");
+        logger->info(". Balance = %\n", calypsoCard->getSvBalance());
+        logger->info(". Last Transaction Number = %\n", calypsoCard->getSvLastTNum());
 
-        const int nbCommands = (modificationsBufferSize / 35) + 1;
+        /* Display the load and debit records */
+        logger->info(". Load log record = %\n", calypsoCard->getSvLoadLogRecord());
+        logger->info(". Debit log record = %\n", calypsoCard->getSvDebitLogLastRecord());
 
-        logger->info("==== Send % Append Record commands. Modifications buffer capacity = % bytes" \
-                     " i.e. % 29-byte commands ====\n",
-                     nbCommands,
-                     modificationsBufferSize,
-                     modificationsBufferSize / 35);
+        /* Prepare an SV Debit of 2 units */
+        cardTransaction->prepareSvDebit(2).prepareReleaseCardChannel().processClosing();
 
-        for (int i = 0; i < nbCommands; i++) {
-            cardTransaction->prepareAppendRecord(
-                CalypsoConstants::SFI_EVENT_LOG,
-                ByteArrayUtil::fromHex(CalypsoConstants::EVENT_LOG_DATA_FILL));
-        }
-
-        cardTransaction->prepareReleaseCardChannel().processClosing();
     } catch (const Exception& e) {
         (void)e;
     }
@@ -214,8 +201,8 @@ int main()
         logger->error("Error during the card resource release: %\n", e.getMessage(), e);
     }
 
-    logger->info("The secure session has ended successfully, all data has been written to the " \
-                 "card's memory\n");
+    logger->info("The Secure Session ended successfully, the stored value has been debited by 2 " \
+                 "units\n");
 
     logger->info("= #### End of the Calypso card processing\n");
 
