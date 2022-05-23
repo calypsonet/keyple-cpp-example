@@ -80,8 +80,6 @@ static const std::unique_ptr<Logger> logger =
 
 int main()
 {
-    Logger::setLoggerLevel(Logger::Level::logInfo);
-
     /* Get the instance of the SmartCardService (singleton pattern) */
     std::shared_ptr<SmartCardService> smartCardService = SmartCardServiceProvider::getService();
 

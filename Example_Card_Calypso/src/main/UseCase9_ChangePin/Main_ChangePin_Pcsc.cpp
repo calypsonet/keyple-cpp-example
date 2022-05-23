@@ -25,6 +25,7 @@
 #include "IllegalStateException.h"
 #include "LoggerFactory.h"
 #include "StringUtils.h"
+#include "Thread.h"
 
 /* Keyple Plugin Pcsc */
 #include "PcscPlugin.h"
@@ -53,9 +54,9 @@ using namespace keyple::plugin::pcsc;
 /**
  *
  *
- * <h1>Use Case Calypso 4 – Calypso Card authentication (PC/SC)</h1>
+ * <h1>Use Case Calypso 9 – Calypso Card Change PIN (PC/SC)</h1>
  *
- * <p>We demonstrate here the debit of the Stored Value counter of a Calypso card.
+ * <p>We demonstrate here the various operations around the PIN code checking.
  *
  * <h2>Scenario:</h2>
  *
@@ -66,7 +67,10 @@ using namespace keyple::plugin::pcsc;
  *       an AID-based application selection scenario.
  *   <li>Creates a {@link CardTransactionManager} using {@link CardSecuritySetting} referencing the
  *       SAM profile defined in the card resource service.
- *   <li>Displays the Stored Value status, debits the Store Value within a Secure Session.
+ *   <li>Ask for the new PIN code.
+ *   <li>Change the PIN code.
+ *   <li>Verify the PIN code.
+ *   <li>Close the card transaction.
  * </ul>
  *
  * All results are logged with slf4j.
@@ -75,9 +79,8 @@ using namespace keyple::plugin::pcsc;
  *
  * @since 2.0.0
  */
-class Main_StoredValue_DebitInSession_Pcsc {};
-static const std::unique_ptr<Logger> logger =
-    LoggerFactory::getLogger(typeid(Main_StoredValue_DebitInSession_Pcsc));
+class Main_ChangePin_Pcsc {};
+static const std::unique_ptr<Logger> logger = LoggerFactory::getLogger(typeid(Main_ChangePin_Pcsc));
 
 int main()
 {
@@ -113,7 +116,9 @@ int main()
                                                  ConfigurationUtil::SAM_READER_NAME_REGEX,
                                                  CalypsoConstants::SAM_PROFILE_NAME);
 
-    logger->info("=============== UseCase Calypso #8: Stored Value debit ==================\n");
+    logger->info("=============== "
+                 "UseCase Calypso #5: Calypso card Verify PIN "
+                 "==================\n");
 
     /* Check if a card is present in the reader */
     if (!cardReader->isCardPresent()) {
@@ -156,9 +161,12 @@ int main()
     logger->info("Calypso Serial Number = %\n",
                  ByteArrayUtil::toHex(calypsoCard->getApplicationSerialNumber()));
 
+    /* Create the card transaction manager */
+    std::shared_ptr<CardTransactionManager> cardTransaction = nullptr;
+
     /*
      * Create security settings that reference the same SAM profile requested from the card resource
-     * service.
+     * service, specifying the key ciphering key parameters.
      */
     std::shared_ptr<CardResource> samResource =
         CardResourceServiceProvider::getService()
@@ -169,27 +177,50 @@ int main()
     cardSecuritySetting->setSamResource(samResource->getReader(),
                                         std::dynamic_pointer_cast<CalypsoSam>(
                                             samResource->getSmartCard()))
-                        .enableSvLoadAndDebitLog();
+                        .setPinVerificationCipheringKey(
+                            CalypsoConstants::PIN_VERIFICATION_CIPHERING_KEY_KIF,
+                            CalypsoConstants::PIN_VERIFICATION_CIPHERING_KEY_KVC)
+                        .setPinModificationCipheringKey(
+                            CalypsoConstants::PIN_MODIFICATION_CIPHERING_KEY_KIF,
+                            CalypsoConstants::PIN_MODIFICATION_CIPHERING_KEY_KVC);
 
     try {
-        /* Performs file reads using the card transaction manager in non-secure mode */
-        std::shared_ptr<CardTransactionManager> cardTransaction =
-            cardExtension->createCardTransaction(cardReader, calypsoCard, cardSecuritySetting);
-        cardTransaction->prepareSvGet(SvOperation::DEBIT, SvAction::DO)
-                        .processOpening(WriteAccessLevel::DEBIT);
+      /* Create a secured card transaction */
+      cardTransaction =
+          cardExtension->createCardTransaction(cardReader, calypsoCard, cardSecuritySetting);
 
-        /* Display the current SV status */
-        logger->info("Current SV status (SV Get for RELOAD):\n");
-        logger->info(". Balance = %\n", calypsoCard->getSvBalance());
-        logger->info(". Last Transaction Number = %\n", calypsoCard->getSvLastTNum());
+      /* Short delay to allow logs to be displayed before the prompt */
+      Thread::sleep(2000);
 
-        /* Display the load and debit records */
-        logger->info(". Load log record = %\n", calypsoCard->getSvLoadLogRecord());
-        logger->info(". Debit log record = %\n", calypsoCard->getSvDebitLogLastRecord());
+        std::string inputString;
+        std::vector<uint8_t> newPinCode(4);
+        bool validPinCodeEntered = false;
+        do {
+                std::cout << "Enter new PIN code (4 numeric digits):";
 
-        /* Prepare an SV Debit of 2 units */
-        cardTransaction->prepareSvDebit(2).prepareReleaseCardChannel().processClosing();
+                std::cin >> inputString;
 
+                if (!StringUtils::matches(inputString, "[0-9]{4}")) {
+                    std::cout << "Invalid PIN code" << std::endl;
+                } else {
+                    newPinCode = std::vector<uint8_t>(inputString.begin(), inputString.end());
+                    validPinCodeEntered = true;
+                }
+        } while (!validPinCodeEntered);
+
+        /* Change the PIN (correct) */
+        cardTransaction->processChangePin(newPinCode);
+
+        logger->info("PIN code value successfully updated to %\n", inputString);
+
+
+        /* Verification of the PIN */
+        cardTransaction->processVerifyPin(newPinCode);
+        logger->info("Remaining attempts: %\n", calypsoCard->getPinAttemptRemaining());
+
+        logger->info("PIN % code successfully presented\n", inputString);
+
+        cardTransaction->prepareReleaseCardChannel();
     } catch (const Exception& e) {
         (void)e;
     }
@@ -200,9 +231,6 @@ int main()
     } catch (const RuntimeException& e) {
         logger->error("Error during the card resource release: %\n", e.getMessage(), e);
     }
-
-    logger->info("The Secure Session ended successfully, the stored value has been debited by 2 " \
-                 "units\n");
 
     logger->info("= #### End of the Calypso card processing\n");
 

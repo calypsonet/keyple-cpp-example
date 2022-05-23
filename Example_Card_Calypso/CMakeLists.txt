@@ -166,3 +166,20 @@ ADD_EXECUTABLE(${USECASE8_PCSC}
                ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/ConfigurationUtil.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/src/main/${USECASE8}/Main_StoredValue_DebitInSession_Pcsc.cpp)
 TARGET_LINK_LIBRARIES(${USECASE8_PCSC} ${KEYPLE_CARD_LIB} ${KEYPLE_PCSC_LIB} ${KEYPLE_SERVICE_LIB} ${KEYPLE_UTIL_LIB} ${KEYPLE_CALYPSO_LIB} ${KEYPLE_RESOURCE_LIB} pthread)
+
+SET(USECASE9 UseCase9_ChangePin)
+SET(USECASE9_PCSC ${USECASE9}_Pcsc)
+ADD_EXECUTABLE(${USECASE9_PCSC}
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/CalypsoConstants.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/ConfigurationUtil.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/${USECASE9}/Main_ChangePin_Pcsc.cpp)
+TARGET_LINK_LIBRARIES(${USECASE9_PCSC} ${KEYPLE_CARD_LIB} ${KEYPLE_PCSC_LIB} ${KEYPLE_SERVICE_LIB} ${KEYPLE_UTIL_LIB} ${KEYPLE_CALYPSO_LIB} ${KEYPLE_RESOURCE_LIB} pthread)
+
+SET(USECASE10 UseCase10_SessionTrace_TN313)
+SET(USECASE10_PCSC ${USECASE10}_Pcsc)
+ADD_EXECUTABLE(${USECASE10_PCSC}
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/CalypsoConstants.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/common/ConfigurationUtil.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/${USECASE10}/CardReaderObserver.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/main/${USECASE10}/Main_SessionTrace_TN313_Pcsc.cpp)
+TARGET_LINK_LIBRARIES(${USECASE10_PCSC} ${KEYPLE_CARD_LIB} ${KEYPLE_PCSC_LIB} ${KEYPLE_SERVICE_LIB} ${KEYPLE_UTIL_LIB} ${KEYPLE_CALYPSO_LIB} ${KEYPLE_RESOURCE_LIB} pthread)
